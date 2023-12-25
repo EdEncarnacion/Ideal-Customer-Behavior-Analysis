@@ -1,0 +1,60 @@
+customers_x_states = data_ideal_customers.groupby('location')['customerID'].nunique().reset_index()
+
+merged = mexico.merge(customers_x_states, left_on='NOMGEO', right_on='location', how='left')
+
+colormap = branca.colormap.LinearColormap(
+    colors=['#b096d0', '#906cbd', '#602da0'],
+    index=merged['customerID'].quantile([0.2, 0.5, 0.8]),
+    vmin=0,
+    vmax=100
+)
+
+m = folium.Map(location=[24, -102], zoom_start=5)
+
+folium.GeoJson(
+    merged,
+    style_function=lambda x: {
+        'fillColor': colormap(x['properties']['customerID'] if x['properties']['customerID'] is not None else 0),
+        'color': 'black',
+        'weight': 1,
+        'fillOpacity': 0.7
+    },
+    tooltip=folium.GeoJsonTooltip(
+        fields=['NOMGEO', 'customerID'],
+        aliases=['Estado:', 'Customers:']
+    )
+).add_to(m)
+
+colormap.add_to(m)
+
+template = """
+{% macro html(this, kwargs) %}
+<div style="position: fixed; 
+            top: 50px; right: 10px; width: 250px; 
+            z-index:9999; font-size:14px;
+            background-color: #F0EFEF;
+            padding: 6px;
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);">
+    <h4>Ideal user acquisition per state</h4>
+    <hr style="margin:4px;">
+    {% for state, customers in this.data.items() %}
+        <div>{{ state }}: {{ customers }}</div>
+    {% endfor %}
+</div>
+{% endmacro %}
+"""
+
+class StateCustomersLegend(MacroElement):
+    def __init__(self, data):
+        super().__init__()
+        self.data = data
+        self._template = Template(template)
+
+data_for_legend = dict(zip(merged['NOMGEO'], merged['customerID'].fillna(0).astype(int)))
+sorted_data_for_legend = dict(sorted(data_for_legend.items(), key=lambda item: item[1], reverse=True))
+
+legend = StateCustomersLegend(sorted_data_for_legend)
+m.add_child(legend)
+
+m
