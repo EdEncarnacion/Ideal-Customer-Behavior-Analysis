@@ -29,5 +29,3 @@ The geospatial map, an integral part of our analysis showcasing the geographical
 This repository is structured to provide a clear and detailed understanding of the ideal customer for our digital wallet application. It includes the Jupyter Notebook with the analysis and a `.txt` file for the map visualization code, ensuring a comprehensive yet accessible exploration of our data.
 
 ---
-
-By delving into this project, we aim to elevate our understanding of our customer base, driving growth and ensuring the longevity of our digital wallet service.
